@@ -200,11 +200,6 @@ items:
       - name: workspace
         targetPath: ""
         type: git
-    outputs:
-      resources:
-      - name: workspace
-        targetPath: ""
-        type: git
     steps:
     - args:
       - step
