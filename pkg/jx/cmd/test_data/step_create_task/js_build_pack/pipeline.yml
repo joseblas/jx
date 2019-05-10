@@ -13,6 +13,11 @@ spec:
     type: git
   tasks:
   - name: from-build-pack
+    params:
+      - name: "version"
+        value: "${params.version}"
+      - name: "build_id"
+        value: "${params.version}"
     resources:
       inputs:
       - name: workspace

@@ -223,7 +223,7 @@ func TestGenerateTektonCRDs(t *testing.T) {
 				if d := cmp.Diff(tekton_helpers_test.AssertLoadPipeline(t, caseDir), pipeline); d != "" {
 					p, _:= yaml.Marshal(pipeline)
 					println(p)
-					t.Errorf("Generated Pipeline did not match expected: %s", d)
+					t.Errorf("Generated Pipeline did not match expected: \n%s", d)
 				}
 				if d, _ := kmp.SafeDiff(tekton_helpers_test.AssertLoadTasks(t, caseDir), taskList, cmpopts.IgnoreFields(corev1.ResourceRequirements{}, "Requests")); d != "" {
 					t.Errorf("Generated Tasks did not match expected: %s", d)
