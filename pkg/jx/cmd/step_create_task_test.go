@@ -267,6 +267,7 @@ func TestGenerateTektonCRDs(t *testing.T) {
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
+
 			caseDir := path.Join(testData, tt.name)
 			_, err = os.Stat(caseDir)
 			assert.NoError(t, err)
@@ -278,7 +279,8 @@ func TestGenerateTektonCRDs(t *testing.T) {
 
 			createTask := &cmd.StepCreateTaskOptions{
 				Pack:             tt.language,
-				NoReleasePrepare: true,
+				NoReleasePrepare: false,
+				NoApply:          true,
 				SourceName:       "source",
 				PodTemplates:     assertLoadPodTemplates(t),
 				GitInfo: &gits.GitRepository{
@@ -324,18 +326,29 @@ func TestGenerateTektonCRDs(t *testing.T) {
 				}
 
 				if d := cmp.Diff(tekton_helpers_test.AssertLoadPipeline(t, caseDir), pipeline); d != "" {
-					t.Errorf("Generated Pipeline did not match expected: %s", d)
+					p, _ := yaml.Marshal(pipeline)
+					println(string(p))
+					t.Errorf("Generated Pipeline did not match expected: \n%s", d)
 				}
 				if d, _ := kmp.SafeDiff(tekton_helpers_test.AssertLoadTasks(t, caseDir), taskList, cmpopts.IgnoreFields(corev1.ResourceRequirements{}, "Requests")); d != "" {
-					t.Errorf("Generated Tasks did not match expected: %s", d)
+					p, _ := yaml.Marshal(taskList)
+					println("TaskList error")
+					println(string(p))
+					t.Errorf("Generated Tasks did not match expected: \n%s", d)
 				}
 				if d := cmp.Diff(tekton_helpers_test.AssertLoadPipelineResources(t, caseDir), resourceList); d != "" {
+					p, _ := yaml.Marshal(resourceList)
+					println(string(p))
 					t.Errorf("Generated PipelineResources did not match expected: %s", d)
 				}
 				if d := cmp.Diff(tekton_helpers_test.AssertLoadPipelineRun(t, caseDir), run); d != "" {
+					p, _ := yaml.Marshal(run)
+					println(string(p))
 					t.Errorf("Generated PipelineRun did not match expected: %s", d)
 				}
 				if d := cmp.Diff(tekton_helpers_test.AssertLoadPipelineStructure(t, caseDir), structure); d != "" {
+					p, _ := yaml.Marshal(structure)
+					println(string(p))
 					t.Errorf("Generated PipelineStructure did not match expected: %s", d)
 				}
 			}
