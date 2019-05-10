@@ -175,7 +175,7 @@ func TestGenerateTektonCRDs(t *testing.T) {
 
 			createTask := &cmd.StepCreateTaskOptions{
 				Pack:             tt.language,
-				NoReleasePrepare: true,
+				NoReleasePrepare: false,
 				SourceName:       "source",
 				PodTemplates:     assertLoadPodTemplates(t),
 				GitInfo: &gits.GitRepository{
