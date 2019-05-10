@@ -1431,13 +1431,53 @@ func (o *StepCreateTaskOptions) viewSteps(tasks ...*pipelineapi.Task) error {
 	return nil
 }
 
+func getVersionFromFile(dir string) (string, error) {
+	var version string
+	versionFile := filepath.Join(dir, "VERSION")
+	exist, err := util.FileExists(versionFile)
+	if err != nil {
+		return "", err
+	}
+	if exist {
+		data, err := ioutil.ReadFile(versionFile)
+		if err != nil {
+			return "", errors.Wrapf(err, "failed to read file %s", versionFile)
+		}
+		text := strings.TrimSpace(string(data))
+		if text == "" {
+			log.Warnf("versions file %s is empty!\n", versionFile)
+		} else {
+			version = text
+			if version != "" {
+				return version, nil
+			}
+		}
+	}
+	return "", errors.Wrapf(err, "failed to read file %s", versionFile)
+}
+
 func (o *StepCreateTaskOptions) setVersionOnReleasePipelines(pipelineConfig *jenkinsfile.PipelineConfig) error {
 	if o.NoReleasePrepare || o.ViewSteps {
 		return nil
 	}
 	version := ""
 
-	if o.PipelineKind == jenkinsfile.PipelineKindRelease {
+	if o.NoApply {
+		version, err := getVersionFromFile(o.Dir)
+		if err != nil {
+			log.Warn("No version file or incorrect content; using 0.0.1 as version")
+			version = "0.0.1"
+		}
+		o.version = version
+		o.Revision = "v" + version
+		o.Results.PipelineParams = append(o.Results.PipelineParams, pipelineapi.Param{
+			Name:  "version",
+			Value: o.version,
+		})
+		log.Infof("Version used: %s", util.ColorInfo(version))
+
+		return nil
+	} else if o.PipelineKind == jenkinsfile.PipelineKindRelease {
 		release := pipelineConfig.Pipelines.Release
 		if release == nil {
 			return fmt.Errorf("no Release pipeline available")
@@ -1460,27 +1500,11 @@ func (o *StepCreateTaskOptions) setVersionOnReleasePipelines(pipelineConfig *jen
 		if err != nil {
 			return err
 		}
-
-		versionFile := filepath.Join(o.Dir, "VERSION")
-		exist, err := util.FileExists(versionFile)
+		version, err = getVersionFromFile(o.Dir)
 		if err != nil {
 			return err
 		}
-		if exist {
-			data, err := ioutil.ReadFile(versionFile)
-			if err != nil {
-				return errors.Wrapf(err, "failed to read file %s", versionFile)
-			}
-			text := strings.TrimSpace(string(data))
-			if text == "" {
-				log.Warnf("versions file %s is empty!\n", versionFile)
-			} else {
-				version = text
-				if version != "" {
-					o.Revision = "v" + version
-				}
-			}
-		}
+		o.Revision = "v" + version
 	} else {
 		// lets use the branch name if we can find it for the version number
 		branch := o.Branch
