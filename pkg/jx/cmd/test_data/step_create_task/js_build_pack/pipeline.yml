@@ -8,6 +8,8 @@ spec:
   params:
     - name: "version"
       value: "${params.version}"
+      description: "the version number for this pipeline which is used as a tag on docker images and helm charts"
+      default: "1.3.1016"
   resources:
   - name: abayer-js-test-repo-build-pack
     type: git
@@ -17,7 +19,7 @@ spec:
       - name: "version"
         value: "${params.version}"
       - name: "build_id"
-        value: "${params.version}"
+        value: "${params.build_id}"
     resources:
       inputs:
       - name: workspace
