@@ -5,10 +5,9 @@ metadata:
   name: abayer-js-test-repo-build-pack-1
   namespace: jx
 spec:
-  params: [
-            - name: "version"
-              value: "${params.version}"
-  ]
+  params:
+    - name: "version"
+      value: "${params.version}"
   resources:
   - name: abayer-js-test-repo-build-pack
     type: git
