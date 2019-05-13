@@ -141,6 +141,7 @@ func TestGenerateTektonCRDs(t *testing.T) {
 			organization: "abayer",
 			branch:       "master",
 			kind:         "release",
+			apply: 		  true,
 		},
 	}
 
@@ -181,7 +182,7 @@ func TestGenerateTektonCRDs(t *testing.T) {
 			createTask := &cmd.StepCreateTaskOptions{
 				Pack:             tt.language,
 				NoReleasePrepare: false,
-				NoApply:          tt.apply,
+				NoApply:          !tt.apply,
 				SourceName:       "source",
 				PodTemplates:     assertLoadPodTemplates(t),
 				GitInfo: &gits.GitRepository{
