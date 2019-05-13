@@ -9,6 +9,11 @@ items:
     namespace: jx
   spec:
     inputs:
+      params:
+      - default: 0.0.1
+        description: the version number for this pipeline which is used as a tag on
+          docker images and helm charts
+        name: version
       resources:
       - name: workspace
         targetPath: source
@@ -21,16 +26,14 @@ items:
       - --verbose
       command:
       - jx
-      image: rawlingsj/builder-jx:wip34
-      name: git-merge
       env:
       - name: FRUIT
         value: BANANA
       - name: DOCKER_REGISTRY
         valueFrom:
           configMapKeyRef:
-            name: jenkins-x-docker-registry
             key: docker.registry
+            name: jenkins-x-docker-registry
       - name: TILLER_NAMESPACE
         value: kube-system
       - name: DOCKER_CONFIG
@@ -46,7 +49,9 @@ items:
       - name: XDG_CONFIG_HOME
         value: /workspace/xdg_config
       - name: _JAVA_OPTIONS
-        value: -XX:+UnlockExperimentalVMOptions -Dsun.zip.disableMemoryMapping=true -XX:+UseParallelGC -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=10 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Xms10m -Xmx192m
+        value: -XX:+UnlockExperimentalVMOptions -Dsun.zip.disableMemoryMapping=true
+          -XX:+UseParallelGC -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=10 -XX:GCTimeRatio=4
+          -XX:AdaptiveSizePolicyWeight=90 -Xms10m -Xmx192m
       - name: BUILD_NUMBER
         value: "1"
       - name: PIPELINE_KIND
@@ -63,6 +68,16 @@ items:
         value: master
       - name: JX_BATCH_MODE
         value: "true"
+      - name: VERSION
+        value: ${inputs.params.version}
+      - name: PREVIEW_VERSION
+        value: ${inputs.params.version}
+      image: rawlingsj/builder-jx:wip34
+      name: git-merge
+      resources:
+        requests:
+          cpu: 400m
+          memory: 512Mi
       securityContext:
         privileged: true
       volumeMounts:
@@ -127,218 +142,12 @@ items:
         value: master
       - name: JX_BATCH_MODE
         value: "true"
+      - name: VERSION
+        value: ${inputs.params.version}
+      - name: PREVIEW_VERSION
+        value: ${inputs.params.version}
       image: jenkinsxio/builder-maven-java11:0.1.235
       name: setup-jx-git-credentials
-      resources:
-        requests:
-          cpu: 400m
-          memory: 512Mi
-      securityContext:
-        privileged: true
-      volumeMounts:
-      - mountPath: /home/jenkins
-        name: workspace-volume
-      - mountPath: /var/run/docker.sock
-        name: docker-daemon
-      - mountPath: /root/.m2/
-        name: volume-0
-      - mountPath: /home/jenkins/.docker
-        name: volume-1
-      - mountPath: /home/jenkins/.gnupg
-        name: volume-2
-      - mountPath: /etc/podinfo
-        name: podinfo
-        readOnly: true
-      workingDir: /workspace/source
-    - args:
-      - echo $(jx-release-version) > VERSION
-      command:
-      - /bin/sh
-      - -c
-      env:
-      - name: DOCKER_CONFIG
-        value: /home/jenkins/.docker/
-      - name: DOCKER_REGISTRY
-        valueFrom:
-          configMapKeyRef:
-            key: docker.registry
-            name: jenkins-x-docker-registry
-      - name: FRUIT
-        value: BANANA
-      - name: GIT_AUTHOR_EMAIL
-        value: jenkins-x@googlegroups.com
-      - name: GIT_AUTHOR_NAME
-        value: somebodyelse
-      - name: GIT_COMMITTER_EMAIL
-        value: jenkins-x@googlegroups.com
-      - name: GIT_COMMITTER_NAME
-        value: jenkins-x-bot
-      - name: TILLER_NAMESPACE
-        value: kube-system
-      - name: XDG_CONFIG_HOME
-        value: /workspace/xdg_config
-      - name: _JAVA_OPTIONS
-        value: -XX:+UnlockExperimentalVMOptions -Dsun.zip.disableMemoryMapping=true
-          -XX:+UseParallelGC -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=10 -XX:GCTimeRatio=4
-          -XX:AdaptiveSizePolicyWeight=90 -Xms10m -Xmx192m
-      - name: BUILD_NUMBER
-        value: "1"
-      - name: PIPELINE_KIND
-        value: release
-      - name: REPO_OWNER
-        value: abayer
-      - name: REPO_NAME
-        value: jx-demo-qs
-      - name: JOB_NAME
-        value: abayer/jx-demo-qs/master
-      - name: APP_NAME
-        value: jx-demo-qs
-      - name: BRANCH_NAME
-        value: master
-      - name: JX_BATCH_MODE
-        value: "true"
-      image: jenkinsxio/builder-maven-java11:0.1.235
-      name: setversion-next-version
-      resources:
-        requests:
-          cpu: 400m
-          memory: 512Mi
-      securityContext:
-        privileged: true
-      volumeMounts:
-      - mountPath: /home/jenkins
-        name: workspace-volume
-      - mountPath: /var/run/docker.sock
-        name: docker-daemon
-      - mountPath: /root/.m2/
-        name: volume-0
-      - mountPath: /home/jenkins/.docker
-        name: volume-1
-      - mountPath: /home/jenkins/.gnupg
-        name: volume-2
-      - mountPath: /etc/podinfo
-        name: podinfo
-        readOnly: true
-      workingDir: /workspace/source
-    - args:
-      - mvn versions:set -DnewVersion=${VERSION}
-      command:
-      - /bin/sh
-      - -c
-      env:
-      - name: DOCKER_CONFIG
-        value: /home/jenkins/.docker/
-      - name: DOCKER_REGISTRY
-        valueFrom:
-          configMapKeyRef:
-            key: docker.registry
-            name: jenkins-x-docker-registry
-      - name: FRUIT
-        value: BANANA
-      - name: GIT_AUTHOR_EMAIL
-        value: jenkins-x@googlegroups.com
-      - name: GIT_AUTHOR_NAME
-        value: somebodyelse
-      - name: GIT_COMMITTER_EMAIL
-        value: jenkins-x@googlegroups.com
-      - name: GIT_COMMITTER_NAME
-        value: jenkins-x-bot
-      - name: TILLER_NAMESPACE
-        value: kube-system
-      - name: XDG_CONFIG_HOME
-        value: /workspace/xdg_config
-      - name: _JAVA_OPTIONS
-        value: -XX:+UnlockExperimentalVMOptions -Dsun.zip.disableMemoryMapping=true
-          -XX:+UseParallelGC -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=10 -XX:GCTimeRatio=4
-          -XX:AdaptiveSizePolicyWeight=90 -Xms10m -Xmx192m
-      - name: BUILD_NUMBER
-        value: "1"
-      - name: PIPELINE_KIND
-        value: release
-      - name: REPO_OWNER
-        value: abayer
-      - name: REPO_NAME
-        value: jx-demo-qs
-      - name: JOB_NAME
-        value: abayer/jx-demo-qs/master
-      - name: APP_NAME
-        value: jx-demo-qs
-      - name: BRANCH_NAME
-        value: master
-      - name: JX_BATCH_MODE
-        value: "true"
-      image: jenkinsxio/builder-maven-java11:0.1.235
-      name: setversion-set-version
-      resources:
-        requests:
-          cpu: 400m
-          memory: 512Mi
-      securityContext:
-        privileged: true
-      volumeMounts:
-      - mountPath: /home/jenkins
-        name: workspace-volume
-      - mountPath: /var/run/docker.sock
-        name: docker-daemon
-      - mountPath: /root/.m2/
-        name: volume-0
-      - mountPath: /home/jenkins/.docker
-        name: volume-1
-      - mountPath: /home/jenkins/.gnupg
-        name: volume-2
-      - mountPath: /etc/podinfo
-        name: podinfo
-        readOnly: true
-      workingDir: /workspace/source
-    - args:
-      - jx step tag --version ${VERSION}
-      command:
-      - /bin/sh
-      - -c
-      env:
-      - name: DOCKER_CONFIG
-        value: /home/jenkins/.docker/
-      - name: DOCKER_REGISTRY
-        valueFrom:
-          configMapKeyRef:
-            key: docker.registry
-            name: jenkins-x-docker-registry
-      - name: FRUIT
-        value: BANANA
-      - name: GIT_AUTHOR_EMAIL
-        value: jenkins-x@googlegroups.com
-      - name: GIT_AUTHOR_NAME
-        value: somebodyelse
-      - name: GIT_COMMITTER_EMAIL
-        value: jenkins-x@googlegroups.com
-      - name: GIT_COMMITTER_NAME
-        value: jenkins-x-bot
-      - name: TILLER_NAMESPACE
-        value: kube-system
-      - name: XDG_CONFIG_HOME
-        value: /workspace/xdg_config
-      - name: _JAVA_OPTIONS
-        value: -XX:+UnlockExperimentalVMOptions -Dsun.zip.disableMemoryMapping=true
-          -XX:+UseParallelGC -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=10 -XX:GCTimeRatio=4
-          -XX:AdaptiveSizePolicyWeight=90 -Xms10m -Xmx192m
-      - name: BUILD_NUMBER
-        value: "1"
-      - name: PIPELINE_KIND
-        value: release
-      - name: REPO_OWNER
-        value: abayer
-      - name: REPO_NAME
-        value: jx-demo-qs
-      - name: JOB_NAME
-        value: abayer/jx-demo-qs/master
-      - name: APP_NAME
-        value: jx-demo-qs
-      - name: BRANCH_NAME
-        value: master
-      - name: JX_BATCH_MODE
-        value: "true"
-      image: jenkinsxio/builder-maven-java11:0.1.235
-      name: setversion-tag-version
       resources:
         requests:
           cpu: 400m
@@ -407,6 +216,10 @@ items:
         value: master
       - name: JX_BATCH_MODE
         value: "true"
+      - name: VERSION
+        value: ${inputs.params.version}
+      - name: PREVIEW_VERSION
+        value: ${inputs.params.version}
       image: jenkinsxio/builder-maven-java11:0.1.235
       name: build-mvn-deploy
       resources:
@@ -477,6 +290,10 @@ items:
         value: master
       - name: JX_BATCH_MODE
         value: "true"
+      - name: VERSION
+        value: ${inputs.params.version}
+      - name: PREVIEW_VERSION
+        value: ${inputs.params.version}
       image: jenkinsxio/builder-maven-java11:0.1.235
       name: build-skaffold-version
       resources:
@@ -547,6 +364,10 @@ items:
         value: master
       - name: JX_BATCH_MODE
         value: "true"
+      - name: VERSION
+        value: ${inputs.params.version}
+      - name: PREVIEW_VERSION
+        value: ${inputs.params.version}
       image: jenkinsxio/builder-maven-java11:0.1.235
       name: build-container-build
       resources:
@@ -617,6 +438,10 @@ items:
         value: master
       - name: JX_BATCH_MODE
         value: "true"
+      - name: VERSION
+        value: ${inputs.params.version}
+      - name: PREVIEW_VERSION
+        value: ${inputs.params.version}
       image: jenkinsxio/builder-maven-java11:0.1.235
       name: build-post-build
       resources:
@@ -687,6 +512,10 @@ items:
         value: master
       - name: JX_BATCH_MODE
         value: "true"
+      - name: VERSION
+        value: ${inputs.params.version}
+      - name: PREVIEW_VERSION
+        value: ${inputs.params.version}
       image: jenkinsxio/builder-maven-java11:0.1.235
       name: promote-changelog
       resources:
@@ -757,6 +586,10 @@ items:
         value: master
       - name: JX_BATCH_MODE
         value: "true"
+      - name: VERSION
+        value: ${inputs.params.version}
+      - name: PREVIEW_VERSION
+        value: ${inputs.params.version}
       image: jenkinsxio/builder-maven-java11:0.1.235
       name: promote-helm-release
       resources:
@@ -827,6 +660,10 @@ items:
         value: master
       - name: JX_BATCH_MODE
         value: "true"
+      - name: VERSION
+        value: ${inputs.params.version}
+      - name: PREVIEW_VERSION
+        value: ${inputs.params.version}
       image: jenkinsxio/builder-maven-java11:0.1.235
       name: promote-jx-promote
       resources:

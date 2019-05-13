@@ -1453,7 +1453,7 @@ func getVersionFromFile(dir string) (string, error) {
 			}
 		}
 	}
-	return "", errors.Wrapf(err, "failed to read file %s", versionFile)
+	return "", errors.New( "failed to read file "+ versionFile)
 }
 
 func (o *StepCreateTaskOptions) setVersionOnReleasePipelines(pipelineConfig *jenkinsfile.PipelineConfig) error {
@@ -1474,7 +1474,7 @@ func (o *StepCreateTaskOptions) setVersionOnReleasePipelines(pipelineConfig *jen
 			Name:  "version",
 			Value: o.version,
 		})
-		log.Infof("Version used: %s", util.ColorInfo(version))
+		log.Infof("Version used: '%s'", util.ColorInfo(version))
 
 		return nil
 	} else if o.PipelineKind == jenkinsfile.PipelineKindRelease {
