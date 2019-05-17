@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/jenkins-x/jx/pkg/log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -112,7 +113,6 @@ func (t Timeout) toDuration() (*metav1.Duration, error) {
 // RootOptions contains options that can be configured on either a pipeline or a stage
 type RootOptions struct {
 	Timeout Timeout `json:"timeout,omitempty"`
-	// TODO: Not yet implemented in build-pipeline
 	Retry int8 `json:"retry,omitempty"`
 	// ContainerOptions allows for advanced configuration of containers for a single stage or the whole
 	// pipeline, adding to configuration that can be configured through the syntax already. This includes things
@@ -1111,8 +1111,10 @@ func stageToTask(s Stage, pipelineIdentifier string, buildIdentifier string, nam
 		if !equality.Semantic.DeepEqual(o.Timeout, Timeout{}) {
 			return nil, errors.New("Timeout on stage not yet supported")
 		}
+		// @TODO remove this block as is already iomplmemmnted
 		if o.Retry != 0 {
-			return nil, errors.New("Retry on stage not yet supported")
+			log.Infof("Using retries %d", o.Retry)
+			//return nil, errors.New("Retry on stage not yet supported")
 		}
 		if !equality.Semantic.DeepEqual(o.Stash, Stash{}) {
 			return nil, errors.New("Stash on stage not yet supported")
@@ -1555,6 +1557,7 @@ func createPipelineTasks(stage *transformedStage, resourceName string) []tektonv
 			TaskRef: tektonv1alpha1.TaskRef{
 				Name: stage.Task.Name,
 			},
+			Retries: int(stage.Stage.Options.Retry),
 		}
 
 		_, provider := findWorkspaceProvider(stage, stage.getEnclosing(0))

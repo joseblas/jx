@@ -616,6 +616,22 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 			expectedErrorMsg: "Retry at top level not yet supported",
 		},
 		{
+			name: "stage_level_and_stage_options",
+			expected: ParsedPipeline(
+				PipelineAgent("some-image"),
+				PipelineOptions(
+					PipelineOptionsTimeout(50, "minutes"),
+				),
+				PipelineStage("A Working Stage",
+					StageOptions(
+						StageOptionsRetry(4),
+					),
+					StageStep(StepCmd("echo"), StepArg("hello"), StepArg("world")),
+				),
+			),
+			//expectedErrorMsg: "Retry on stage not yet supported",
+		},
+		{
 			name: "stage_and_step_agent",
 			expected: ParsedPipeline(
 				PipelineStage("A Working Stage",
@@ -1159,6 +1175,9 @@ func TestParseJenkinsfileYaml(t *testing.T) {
 
 			pipeline, tasks, structure, err := parsed.GenerateCRDs("somepipeline", "1", "jx", nil, nil, "source")
 
+			if tt.name == "stage_level_and_stage_options" {
+				println("Hola")
+			}
 			if err != nil {
 				if tt.expectedErrorMsg != "" {
 					if d := cmp.Diff(tt.expectedErrorMsg, err.Error()); d != "" {

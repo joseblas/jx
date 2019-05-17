@@ -1,0 +1,20 @@
+pipelineConfig:
+  pipelines:
+    release:
+      pipeline:
+        agent:
+          image: some-image
+        options:
+          timeout:
+            time: 50
+            unit: minutes
+          retry: 0
+        stages:
+          - name: A Working Stage
+            options:
+              retry: 4
+            steps:
+              - command: echo
+                args:
+                  - hello
+                  - world
